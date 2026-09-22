@@ -138,8 +138,9 @@ cat "$SRC/postgres.dump" | "${COMPOSE[@]}" exec -T postgres sh -c \
   'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists --no-owner --no-privileges'
 
 echo "[4/8] Auditing pending migrations before application startup..."
-"${COMPOSE[@]}" --profile ops run --rm ops \
-  python manage.py release_migration_plan --require-reversible \
+"${COMPOSE[@]}" --profile ops run --rm \
+  --user "$(id -u):$(id -g)" \
+  ops python manage.py release_migration_plan --require-reversible \
   --json-out "/backups/$NAME/restore-migration-plan.json"
 
 echo "[5/8] Applying audited forward migrations..."
