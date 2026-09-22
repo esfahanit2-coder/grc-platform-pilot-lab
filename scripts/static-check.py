@@ -157,6 +157,10 @@ for rel in required:
     if not (ROOT / rel).exists():
         errors.append(f"Missing: {rel}")
 
+pilot_compose_text = (ROOT / "docker-compose.pilot.yml").read_text(encoding="utf-8")
+if "X-Forwarded-Proto':'https'" not in pilot_compose_text:
+    errors.append("Pilot backend healthcheck must mark the internal probe as HTTPS through the trusted proxy header")
+
 if (ROOT / ".env").exists():
     errors.append(".env must not be packaged; use .env.example")
 
