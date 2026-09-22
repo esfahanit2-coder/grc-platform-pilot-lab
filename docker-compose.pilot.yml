@@ -5,7 +5,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-grc}
       POSTGRES_USER: ${POSTGRES_USER:-grc}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
-    volumes: [postgres_pilot_data:/var/lib/postgresql/data]
+    volumes: [postgres_pilot_data:/var/lib/postgresql]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-grc} -d ${POSTGRES_DB:-grc}"]
       interval: 5s
