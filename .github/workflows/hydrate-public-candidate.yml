@@ -33,18 +33,18 @@ jobs:
           rm -rf /tmp/grc-candidate
           mkdir -p /tmp/grc-candidate
           python3 - <<'PY'
-import pathlib
-import tarfile
+          import pathlib
+          import tarfile
 
-archive = pathlib.Path("/tmp/grc-candidate.tar.gz")
-dest = pathlib.Path("/tmp/grc-candidate")
-with tarfile.open(archive, "r:gz") as tf:
-    for member in tf.getmembers():
-        p = pathlib.PurePosixPath(member.name)
-        if p.is_absolute() or ".." in p.parts or member.issym() or member.islnk():
-            raise SystemExit(f"unsafe archive member: {member.name}")
-    tf.extractall(dest, filter="data")
-PY
+          archive = pathlib.Path("/tmp/grc-candidate.tar.gz")
+          dest = pathlib.Path("/tmp/grc-candidate")
+          with tarfile.open(archive, "r:gz") as tf:
+              for member in tf.getmembers():
+                  p = pathlib.PurePosixPath(member.name)
+                  if p.is_absolute() or ".." in p.parts or member.issym() or member.islnk():
+                      raise SystemExit(f"unsafe archive member: {member.name}")
+              tf.extractall(dest, filter="data")
+          PY
 
           rm -rf public-export
           rm -f .github/workflows/hydrate-public-candidate.yml
