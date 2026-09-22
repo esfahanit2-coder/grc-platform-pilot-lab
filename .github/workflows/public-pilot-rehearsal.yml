@@ -1,4 +1,4 @@
-# trigger-rehearsal: validated-candidate-472ca08-r1
+# trigger-rehearsal: canonical-backup-path-472ca08-r2
 name: Public clean-host pilot rehearsal
 
 on:
@@ -251,7 +251,6 @@ jobs:
         run: |
           set -euo pipefail
           BACKUP_QUIESCE=YES \
-          BACKUP_REQUIRE_RUNNING=YES \
           PILOT_TLS=YES \
             bash scripts/pilot-backup.sh "${BACKUP_NAME}"
 
