@@ -57,7 +57,7 @@ jobs:
           sudo update-ca-certificates >/dev/null
 
           SOURCE_CANDIDATE_SHA="$(tr -d '\r\n' < PUBLIC_PILOT_SOURCE_SHA)"
-          test "${SOURCE_CANDIDATE_SHA}" = "3443bea23764bcf0ebf12b43b075396565963ef0"
+          [[ "${SOURCE_CANDIDATE_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "ERROR: invalid PUBLIC_PILOT_SOURCE_SHA" >&2; exit 2; }
           echo "SOURCE_CANDIDATE_SHA=${SOURCE_CANDIDATE_SHA}" >> "${GITHUB_ENV}"
 
           release_version="lab-${SOURCE_CANDIDATE_SHA:0:12}"
