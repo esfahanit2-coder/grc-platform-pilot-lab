@@ -161,6 +161,10 @@ pilot_compose_text = (ROOT / "docker-compose.pilot.yml").read_text(encoding="utf
 if "X-Forwarded-Proto':'https'" not in pilot_compose_text:
     errors.append("Pilot backend healthcheck must mark the internal probe as HTTPS through the trusted proxy header")
 
+pilot_backup_text = (ROOT / "scripts/pilot-backup.sh").read_text(encoding="utf-8")
+if '--user "$(id -u):$(id -g)"' not in pilot_backup_text:
+    errors.append("Pilot object-store backup export must preserve host-operator ownership on the bind-mounted backup archive")
+
 if (ROOT / ".env").exists():
     errors.append(".env must not be packaged; use .env.example")
 
