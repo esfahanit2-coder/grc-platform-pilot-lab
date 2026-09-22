@@ -197,7 +197,13 @@ jobs:
               c.create_bucket(Bucket=s.bucket)
           '
 
-          "${COMPOSE[@]}" up -d --wait backend worker beat frontend gateway
+          if ! "${COMPOSE[@]}" up -d --wait backend worker beat frontend gateway; then
+            echo "::group::Sanitized application startup diagnostics"
+            "${COMPOSE[@]}" ps || true
+            "${COMPOSE[@]}" logs --no-color --tail=220 backend worker beat frontend gateway 2>&1 |               sed -E 's#(password|secret|token|key)=([^[:space:]]+)#\1=[REDACTED]#Ig' || true
+            echo "::endgroup::"
+            exit 1
+          fi
           "${COMPOSE[@]}" exec -T backend python manage.py pilot_readiness
 
           curl --fail --silent --show-error \
