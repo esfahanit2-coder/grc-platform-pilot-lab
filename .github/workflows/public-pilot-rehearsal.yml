@@ -1,0 +1,395 @@
+name: Public clean-host pilot rehearsal
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/public-pilot-rehearsal.yml
+
+permissions:
+  contents: read
+
+jobs:
+  clean-host-rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      PILOT_HOSTNAME: grc-pilot.local
+      BACKUP_NAME: lab-drill-001
+
+    steps:
+      - name: Check out public candidate mirror
+        uses: actions/checkout@v7
+
+      - name: Prepare isolated production-like configuration and TLS
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p runtime/tls runtime/ca artifacts/public-rehearsal
+          chmod 700 runtime runtime/tls runtime/ca artifacts/public-rehearsal
+
+          sudo sh -c 'printf "127.0.0.1 grc-pilot.local\n" >> /etc/hosts'
+
+          openssl genrsa -out runtime/ca/ca.key 2048 >/dev/null 2>&1
+          openssl req -x509 -new -key runtime/ca/ca.key -sha256 -days 1 \
+            -subj "/CN=GRC Public Pilot Lab CA" \
+            -out runtime/ca/ca.crt >/dev/null 2>&1
+          openssl req -new -newkey rsa:2048 -nodes \
+            -keyout runtime/tls/server.key \
+            -out runtime/tls/server.csr \
+            -subj "/CN=${PILOT_HOSTNAME}" >/dev/null 2>&1
+          cat > runtime/tls/server.ext <<'EOF'
+          subjectAltName=DNS:grc-pilot.local,DNS:localhost,IP:127.0.0.1
+          extendedKeyUsage=serverAuth
+          keyUsage=digitalSignature,keyEncipherment
+          EOF
+          openssl x509 -req -in runtime/tls/server.csr \
+            -CA runtime/ca/ca.crt -CAkey runtime/ca/ca.key -CAcreateserial \
+            -out runtime/tls/server.crt -days 1 -sha256 \
+            -extfile runtime/tls/server.ext >/dev/null 2>&1
+          chmod 600 runtime/ca/ca.key runtime/tls/server.key
+          chmod 644 runtime/ca/ca.crt runtime/tls/server.crt
+
+          sudo cp runtime/ca/ca.crt /usr/local/share/ca-certificates/grc-public-pilot-lab.crt
+          sudo update-ca-certificates >/dev/null
+
+          SOURCE_CANDIDATE_SHA="$(tr -d '\r\n' < PUBLIC_PILOT_SOURCE_SHA)"
+          test "${SOURCE_CANDIDATE_SHA}" = "3443bea23764bcf0ebf12b43b075396565963ef0"
+          echo "SOURCE_CANDIDATE_SHA=${SOURCE_CANDIDATE_SHA}" >> "${GITHUB_ENV}"
+
+          release_version="lab-${SOURCE_CANDIDATE_SHA:0:12}"
+          django_secret="$(openssl rand -hex 48)"
+          audit_key="$(openssl rand -hex 32)"
+          postgres_password="$(openssl rand -hex 24)"
+          metrics_token="$(openssl rand -hex 24)"
+          s3_access="$(openssl rand -hex 12)"
+          s3_secret="$(openssl rand -hex 24)"
+          mfa_key="$(python3 - <<'PY'
+          import base64, secrets
+          print(base64.urlsafe_b64encode(secrets.token_bytes(32)).decode())
+          PY
+          )"
+
+          cat > .env <<EOF
+          APP_ENV=production
+          GRC_RELEASE_VERSION=${release_version}
+          DJANGO_SECRET_KEY=${django_secret}
+          AUDIT_INTEGRITY_KEY=${audit_key}
+          AUDIT_INTEGRITY_KEY_ID=v1
+          DJANGO_DEBUG=0
+          DJANGO_ALLOWED_HOSTS=${PILOT_HOSTNAME},localhost,127.0.0.1
+          CORS_ALLOWED_ORIGINS=https://${PILOT_HOSTNAME}
+          CSRF_TRUSTED_ORIGINS=https://${PILOT_HOSTNAME}
+
+          POSTGRES_DB=grc
+          POSTGRES_USER=grc
+          POSTGRES_PASSWORD=${postgres_password}
+          POSTGRES_HOST=postgres
+          POSTGRES_PORT=5432
+
+          REDIS_URL=redis://redis:6379/0
+          CELERY_BROKER_URL=redis://redis:6379/1
+          CELERY_RESULT_BACKEND=redis://redis:6379/2
+          AUTH_THROTTLE_REDIS_URL=redis://redis:6379/0
+          AUTH_LOGIN_RATE=10/min
+          AUTH_MFA_RATE=12/min
+          AUTH_REFRESH_RATE=30/min
+
+          OPS_ASYNC_HEARTBEAT_MAX_AGE_SECONDS=180
+          OPS_BACKUP_MAX_AGE_HOURS=26
+          OPS_CELERY_QUEUE_WARN_DEPTH=1000
+          OPS_METRICS_TOKEN=${metrics_token}
+          GRC_LOG_LEVEL=INFO
+
+          S3_ENDPOINT_URL=http://objectstore:8333
+          S3_REGION=us-east-1
+          S3_BUCKET=grc-evidence
+          S3_ACCESS_KEY=${s3_access}
+          S3_SECRET_KEY=${s3_secret}
+          S3_USE_SSL=0
+
+          EVIDENCE_MAX_FILE_SIZE=26214400
+          EVIDENCE_REQUIRE_CLEAN_DOWNLOAD=1
+          EVIDENCE_MALWARE_SCANNER=disabled
+          EVIDENCE_MALWARE_SCAN_AUTOSUBMIT=1
+          EVIDENCE_MALWARE_SCAN_MAX_RETRIES=3
+          EVIDENCE_MALWARE_SCAN_RETRY_SECONDS=30
+
+          MFA_ENCRYPTION_KEY=${mfa_key}
+          MFA_ISSUER=GRC Public Pilot Lab
+
+          AUTH_COOKIE_MODE=1
+          SESSION_COOKIE_SECURE=1
+          CSRF_COOKIE_SECURE=1
+          SECURE_SSL_REDIRECT=1
+          SECURE_HSTS_SECONDS=31536000
+          SECURE_HSTS_PRELOAD=0
+          AUTH_COOKIE_SAMESITE=Strict
+
+          AI_ENABLED=0
+          AI_RAG_MODE=hybrid
+          AI_DEFAULT_CLASSIFICATION=internal
+
+          CONNECTOR_HTTP_TIMEOUT=30
+          CONNECTOR_MAX_RESPONSE_BYTES=5242880
+
+          TLS_CERT_PATH=./runtime/tls/server.crt
+          TLS_KEY_PATH=./runtime/tls/server.key
+
+          NOTIFICATION_EMAIL_ENABLED=0
+          EMAIL_PORT=587
+          EMAIL_USE_TLS=1
+          EMAIL_USE_SSL=0
+          EMAIL_TIMEOUT=15
+          DEFAULT_FROM_EMAIL=grc-lab@localhost
+          APP_BASE_URL=https://${PILOT_HOSTNAME}
+          NOTIFICATION_EMAIL_MAX_ATTEMPTS=5
+          NOTIFICATION_EMAIL_RETRY_SECONDS=300
+          NOTIFICATION_DUE_SOON_DAYS=3
+          EOF
+          chmod 600 .env
+
+          python3 scripts/datacenter-env-validate.py \
+            --env .env \
+            --release-version "${release_version}" \
+            --require-tls-files \
+            > runtime/config-validation.json
+
+          printf '%s\n' "${SOURCE_CANDIDATE_SHA}" > runtime/source-candidate.txt
+          git rev-parse HEAD > runtime/public-mirror-commit.txt
+
+      - name: Build and start clean host stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PILOT_ENV_FILE="$PWD/.env"
+          COMPOSE=(docker compose --env-file .env -f docker-compose.pilot.yml -f docker-compose.pilot.tls.yml)
+
+          "${COMPOSE[@]}" config --format json > runtime/compose-rendered.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open("runtime/compose-rendered.json", encoding="utf-8"))
+          ports=p["services"]["gateway"].get("ports") or []
+          published={str(row.get("published")) for row in ports if isinstance(row, dict)}
+          assert "443" in published, published
+          assert "8080" not in published, published
+          PY
+
+          "${COMPOSE[@]}" build backend frontend
+          if ! "${COMPOSE[@]}" up -d --wait postgres redis objectstore; then
+            echo "::group::Sanitized dependency startup diagnostics"
+            "${COMPOSE[@]}" ps || true
+            "${COMPOSE[@]}" logs --no-color --tail=160 postgres redis objectstore 2>&1 |               sed -E 's#(password|secret|token|key)=([^[:space:]]+)#\1=[REDACTED]#Ig' || true
+            echo "::endgroup::"
+            exit 1
+          fi
+
+          "${COMPOSE[@]}" --profile ops run --rm ops python manage.py shell -c '
+          from apps.common.storage import S3ObjectStorage
+          s=S3ObjectStorage()
+          c=s._client()
+          try:
+              c.head_bucket(Bucket=s.bucket)
+          except Exception:
+              c.create_bucket(Bucket=s.bucket)
+          '
+
+          "${COMPOSE[@]}" up -d --wait backend worker beat frontend gateway
+          "${COMPOSE[@]}" exec -T backend python manage.py pilot_readiness
+
+          curl --fail --silent --show-error \
+            --cacert runtime/ca/ca.crt \
+            "https://${PILOT_HOSTNAME}/api/v1/health/live" \
+            > runtime/health-live.json
+          curl --fail --silent --show-error \
+            --cacert runtime/ca/ca.crt \
+            "https://${PILOT_HOSTNAME}/api/v1/health/ready" \
+            > runtime/health-ready.json
+
+      - name: Bootstrap synthetic tenant and create pre-backup markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PILOT_ENV_FILE="$PWD/.env"
+          COMPOSE=(docker compose --env-file .env -f docker-compose.pilot.yml -f docker-compose.pilot.tls.yml)
+
+          admin_password="$(openssl rand -base64 36 | tr -d '\n')"
+          printf '%s\n' "${admin_password}" | "${COMPOSE[@]}" exec -T backend \
+            python manage.py bootstrap_datacenter \
+              --tenant-code pilotlab \
+              --tenant-name "Public Pilot Lab" \
+              --admin-username labadmin \
+              --admin-email labadmin@example.invalid \
+              --password-stdin \
+              --json \
+              > runtime/bootstrap.json
+          unset admin_password
+
+          "${COMPOSE[@]}" exec -T backend python manage.py shell -c '
+          import io
+          from apps.common.storage import S3ObjectStorage
+          s=S3ObjectStorage()
+          s.put("pilot-rehearsal/pre-backup.txt", io.BytesIO(b"pre-backup-object-v1"), "text/plain")
+          '
+
+          "${COMPOSE[@]}" exec -T backend python manage.py shell -c '
+          from apps.tenancy.models import Tenant
+          assert Tenant.objects.filter(code="pilotlab").exists()
+          '
+
+      - name: Quiesced backup and TLS preservation check
+        shell: bash
+        run: |
+          set -euo pipefail
+          BACKUP_QUIESCE=YES \
+          BACKUP_REQUIRE_RUNNING=YES \
+          PILOT_TLS=YES \
+            bash scripts/pilot-backup.sh "${BACKUP_NAME}"
+
+          curl --fail --silent --show-error \
+            --cacert runtime/ca/ca.crt \
+            "https://${PILOT_HOSTNAME}/api/v1/health/ready" \
+            > runtime/health-after-backup.json
+
+          if curl --fail --silent --max-time 3 http://127.0.0.1:8080/ >/dev/null 2>&1; then
+            echo "ERROR: TLS backup restart unexpectedly exposed the base 8080 mapping." >&2
+            exit 1
+          fi
+
+      - name: Create post-backup state
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PILOT_ENV_FILE="$PWD/.env"
+          COMPOSE=(docker compose --env-file .env -f docker-compose.pilot.yml -f docker-compose.pilot.tls.yml)
+
+          "${COMPOSE[@]}" exec -T backend python manage.py shell -c '
+          from apps.tenancy.models import Tenant
+          Tenant.objects.create(
+              code="postbackup",
+              name="Post Backup Marker",
+              tenant_type="enterprise",
+              status="active",
+              default_language="fa",
+              timezone="Asia/Tehran",
+          )
+          '
+
+          "${COMPOSE[@]}" exec -T backend python manage.py shell -c '
+          import io
+          from apps.common.storage import S3ObjectStorage
+          s=S3ObjectStorage()
+          s.put("pilot-rehearsal/pre-backup.txt", io.BytesIO(b"post-backup-mutated-object"), "text/plain")
+          s.put("pilot-rehearsal/post-backup-only.txt", io.BytesIO(b"must-disappear-after-restore"), "text/plain")
+          '
+
+      - name: Destructive restore and recovery assertions
+        shell: bash
+        run: |
+          set -euo pipefail
+          CONFIRM_RESTORE=YES \
+          PILOT_TLS=YES \
+            bash scripts/pilot-restore.sh "${BACKUP_NAME}"
+
+          export PILOT_ENV_FILE="$PWD/.env"
+          COMPOSE=(docker compose --env-file .env -f docker-compose.pilot.yml -f docker-compose.pilot.tls.yml)
+
+          "${COMPOSE[@]}" exec -T backend python manage.py shell -c '
+          from apps.tenancy.models import Tenant
+          assert Tenant.objects.filter(code="pilotlab").exists(), "pre-backup tenant missing after restore"
+          assert not Tenant.objects.filter(code="postbackup").exists(), "post-backup tenant survived restore"
+          '
+
+          "${COMPOSE[@]}" exec -T backend python manage.py shell -c '
+          from botocore.exceptions import ClientError
+          from apps.common.storage import S3ObjectStorage
+          s=S3ObjectStorage()
+          c=s._client()
+          body=c.get_object(Bucket=s.bucket, Key="pilot-rehearsal/pre-backup.txt")["Body"].read()
+          assert body == b"pre-backup-object-v1", body
+          try:
+              c.head_object(Bucket=s.bucket, Key="pilot-rehearsal/post-backup-only.txt")
+          except ClientError:
+              pass
+          else:
+              raise AssertionError("post-backup object survived restore")
+          '
+
+          "${COMPOSE[@]}" exec -T backend python manage.py pilot_readiness
+
+          curl --fail --silent --show-error \
+            --cacert runtime/ca/ca.crt \
+            "https://${PILOT_HOSTNAME}/api/v1/health/ready" \
+            > runtime/health-after-restore.json
+
+      - name: Write sanitized rehearsal result
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          backup=json.loads(Path("backups/lab-drill-001/backup-observation.json").read_text())
+          restore=json.loads(Path("backups/lab-drill-001/restore-observation.json").read_text())
+          payload={
+              "schema":"grc-public-pilot-rehearsal-v1",
+              "source_candidate_sha":Path("runtime/source-candidate.txt").read_text().strip(),
+              "public_mirror_commit":Path("runtime/public-mirror-commit.txt").read_text().strip(),
+              "result":"PASS",
+              "production_claim":False,
+              "issue7_closeable_from_this_run":False,
+              "checks":{
+                  "production_env_validation":"PASS",
+                  "tls_stack_start":"PASS",
+                  "bootstrap":"PASS",
+                  "quiesced_backup":"PASS",
+                  "tls_preserved_after_backup":"PASS",
+                  "database_pre_backup_marker_restored":"PASS",
+                  "database_post_backup_marker_removed":"PASS",
+                  "object_pre_backup_content_restored":"PASS",
+                  "object_post_backup_marker_removed":"PASS",
+                  "readiness_after_restore":"PASS",
+              },
+              "backup":{
+                  "duration_seconds":backup.get("duration_seconds"),
+                  "release_consistent_quiesce":backup.get("release_consistent_quiesce"),
+              },
+              "restore":{
+                  "observed_rto_seconds":restore.get("observed_rto_seconds"),
+                  "postgres_major":restore.get("postgres_major"),
+              },
+              "boundary":"Ephemeral GitHub-hosted Ubuntu rehearsal only; not customer PKI, measured customer RPO/RTO, local-AI egress isolation, or final Issue #7 evidence.",
+          }
+          Path("artifacts/public-rehearsal/rehearsal-summary.json").write_text(
+              json.dumps(payload, indent=2, sort_keys=True)+"\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Upload low-risk rehearsal evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-pilot-rehearsal-evidence
+          if-no-files-found: warn
+          retention-days: 3
+          path: |
+            artifacts/public-rehearsal/rehearsal-summary.json
+            runtime/config-validation.json
+            runtime/source-candidate.txt
+            runtime/public-mirror-commit.txt
+            backups/lab-drill-001/backup-observation.json
+            backups/lab-drill-001/restore-observation.json
+
+      - name: Destroy ephemeral stack and local secrets
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          docker compose --env-file .env -f docker-compose.pilot.yml -f docker-compose.pilot.tls.yml down -v --remove-orphans
+          rm -f .env
+          rm -rf runtime/tls runtime/ca backups
