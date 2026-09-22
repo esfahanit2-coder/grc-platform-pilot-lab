@@ -39,6 +39,12 @@ Compose 2.24.4 is the minimum because the TLS override uses !override to replace
 
 No project script installs OS packages or Docker from the internet.
 
+### PostgreSQL 18 persistent-data layout
+
+The bundled database image is `pgvector/pgvector:0.8.6-pg18-trixie`, based on PostgreSQL 18. PostgreSQL 18 uses version-specific `PGDATA` beneath `/var/lib/postgresql` (the image default is `/var/lib/postgresql/18/docker`). The named Docker volume therefore mounts the parent `/var/lib/postgresql`.
+
+Do not change this back to the PostgreSQL 17-and-earlier `/var/lib/postgresql/data` volume target. A PostgreSQL major-version change remains a separately planned database upgrade/recovery procedure; it must not be treated as an ordinary application image update.
+
 ## 3. Network and firewall expectations
 
 ### Inbound to the host
