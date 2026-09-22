@@ -1,0 +1,205 @@
+name: release-gate
+
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  runtime:
+    if: github.event_name != 'pull_request'
+    uses: ./.github/workflows/runtime-gates.yml
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Reject mutable latest image tags in release compose
+        run: '! grep -nE "image:.*:latest([[:space:]]|$)" docker-compose.pilot.yml'
+
+      - name: Validate non-TypeScript static contract
+        run: python scripts/static-check.py --skip-typescript
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Validate bounded performance harness
+        run: python scripts/http-load-smoke.py --self-test
+
+      - name: Validate offline release signing and tamper contract
+        run: |
+          python scripts/offline-release-manifest.py self-test
+          bash scripts/offline-release-ci-test.sh
+
+      - name: Install Bandit SAST
+        run: python -m pip install bandit==1.9.4
+
+      - name: Run Bandit high-severity SAST
+        id: bandit_sast
+        continue-on-error: true
+        run: bandit -r backend -lll -ii -f json -o bandit-results.json
+
+      - name: Summarize Bandit findings without source snippets
+        if: steps.bandit_sast.outcome == 'failure'
+        run: |
+          jq -r '.results[]? | "\(.filename):\(.line_number) \(.test_id) severity=\(.issue_severity) confidence=\(.issue_confidence)"' bandit-results.json
+
+      - name: Scan repository for secrets
+        id: secret_scan
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: secret
+          format: json
+          output: trivy-secret-results.json
+          exit-code: "1"
+          skip-dirs: .git,.next,node_modules
+
+      - name: Summarize secret findings without secret values
+        if: steps.secret_scan.outcome == 'failure'
+        run: |
+          jq -r '.Results[]? | .Target as $target | .Secrets[]? | "\($target):\(.StartLine) \(.RuleID) severity=\(.Severity)"' trivy-secret-results.json
+
+      - name: Build release candidate images
+        run: |
+          docker build -t grc-backend:ci backend
+          docker build -t grc-frontend:ci frontend
+
+      - name: Scan backend image for high and critical vulnerabilities
+        id: backend_container_scan
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: grc-backend:ci
+          format: json
+          output: trivy-backend-results.json
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+          skip-setup-trivy: true
+
+      - name: Summarize backend container findings
+        if: steps.backend_container_scan.outcome == 'failure'
+        continue-on-error: true
+        run: |
+          jq -r '.Results[]? | .Target as $target | .Vulnerabilities[]? | "\($target) \(.VulnerabilityID) \(.PkgName) installed=\(.InstalledVersion) fixed=\(.FixedVersion // "") severity=\(.Severity)"' trivy-backend-results.json
+
+      - name: Scan frontend image for high and critical vulnerabilities
+        id: frontend_container_scan
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: grc-frontend:ci
+          format: json
+          output: trivy-frontend-results.json
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+          skip-setup-trivy: true
+
+      - name: Summarize frontend container findings
+        if: steps.frontend_container_scan.outcome == 'failure'
+        continue-on-error: true
+        run: |
+          jq -r '.Results[]? | .Target as $target | .Vulnerabilities[]? | "\($target) \(.VulnerabilityID) \(.PkgName) installed=\(.InstalledVersion) fixed=\(.FixedVersion // "") severity=\(.Severity)"' trivy-frontend-results.json
+
+      - name: Generate backend CycloneDX SBOM
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: grc-backend:ci
+          format: cyclonedx
+          output: sbom-backend.cdx.json
+          exit-code: "0"
+          skip-setup-trivy: true
+
+      - name: Generate frontend CycloneDX SBOM
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: grc-frontend:ci
+          format: cyclonedx
+          output: sbom-frontend.cdx.json
+          exit-code: "0"
+          skip-setup-trivy: true
+
+      - name: Upload security scan reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-security-reports-${{ github.sha }}
+          path: |
+            bandit-results.json
+            trivy-secret-results.json
+            trivy-backend-results.json
+            trivy-frontend-results.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload release SBOMs
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-sbom-${{ github.sha }}
+          path: |
+            sbom-backend.cdx.json
+            sbom-frontend.cdx.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Enforce security scan results
+        if: always() && steps.bandit_sast.outcome != 'skipped'
+        env:
+          BANDIT_RESULT: ${{ steps.bandit_sast.outcome }}
+          SECRET_RESULT: ${{ steps.secret_scan.outcome }}
+          BACKEND_SCAN_RESULT: ${{ steps.backend_container_scan.outcome }}
+          FRONTEND_SCAN_RESULT: ${{ steps.frontend_container_scan.outcome }}
+        run: |
+          failed=0
+          for result in \
+            "Bandit SAST:${BANDIT_RESULT}" \
+            "Secret scan:${SECRET_RESULT}" \
+            "Backend container scan:${BACKEND_SCAN_RESULT}" \
+            "Frontend container scan:${FRONTEND_SCAN_RESULT}"
+          do
+            name="${result%%:*}"
+            outcome="${result#*:}"
+            if [ "$outcome" != "success" ]; then
+              echo "::error::${name} did not pass (${outcome})"
+              failed=1
+            fi
+          done
+          exit "$failed"
+
+  release-ready:
+    needs: [runtime, security]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce complete release gate
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          RUNTIME_RESULT: ${{ needs.runtime.result }}
+          SECURITY_RESULT: ${{ needs.security.result }}
+        run: |
+          test "$SECURITY_RESULT" = "success" || {
+            echo "Security release gate did not pass: $SECURITY_RESULT"
+            exit 1
+          }
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            test "$RUNTIME_RESULT" = "success" || {
+              echo "Runtime release gate did not pass: $RUNTIME_RESULT"
+              exit 1
+            }
+          fi
