@@ -1,0 +1,127 @@
+name: runtime-gates
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.6-pg18-trixie
+        env:
+          POSTGRES_DB: grc_test
+          POSTGRES_USER: grc
+          POSTGRES_PASSWORD: grc
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U grc -d grc_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      APP_ENV: test
+      DJANGO_SECRET_KEY: ci-test-secret-key-at-least-32-bytes-long
+      POSTGRES_DB: grc_test
+      POSTGRES_USER: grc
+      POSTGRES_PASSWORD: grc
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_PORT: 5432
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r requirements.txt
+      - run: pip install pip-audit
+      - run: pip-audit -r requirements.txt
+      - name: Audit migration rollback safety before applying schema
+        run: python manage.py release_migration_plan --require-reversible
+      - run: python manage.py makemigrations --check --dry-run
+      - run: python manage.py migrate
+      - run: python manage.py test
+      - run: python manage.py test apps.common.tests.GoldenPilotScenarioTests apps.connectors.tests.ConnectorEvidenceTests
+      - run: python -m compileall .
+      - run: cd .. && python scripts/static-check.py --skip-typescript
+      - name: Validate pilot compose, TLS gateway and ops scripts
+        working-directory: .
+        env:
+          PILOT_ENV_FILE: .env.pilot.example
+        run: |
+          docker compose --env-file .env.pilot.example -f docker-compose.pilot.yml --profile local-ai --profile ops config >/dev/null
+          docker compose --env-file .env.pilot.example -f docker-compose.pilot.yml -f docker-compose.pilot.tls.yml --profile local-ai --profile ops config > /tmp/grc-tls-compose.yml
+          ! grep -Eq 'published: "?8080"?' /tmp/grc-tls-compose.yml
+          grep -Eq 'published: "?80"?' /tmp/grc-tls-compose.yml
+          grep -Eq 'published: "?443"?' /tmp/grc-tls-compose.yml
+          bash -n scripts/datacenterctl
+          bash -n scripts/pilot-backup.sh
+          bash -n scripts/pilot-restore.sh
+          bash -n scripts/pilot-upgrade.sh
+          bash -n scripts/pilot-rollback.sh
+          bash -n scripts/migration-rehearsal.sh
+          bash -n scripts/offline-release-build.sh
+          bash -n scripts/offline-release-sign.sh
+          bash -n scripts/offline-release-verify.sh
+          bash -n scripts/offline-release-apply.sh
+          bash -n scripts/offline-release-ci-test.sh
+          bash -n scripts/support-evidence.sh
+          python scripts/datacenter-env-validate.py --self-test
+          python scripts/datacenter-verify.py --self-test
+          python scripts/datacenter-support-bundle.py --self-test
+          python scripts/final-release-acceptance.py --self-test
+          python scripts/offline-release-manifest.py self-test
+          bash scripts/offline-release-ci-test.sh
+          mkdir -p /tmp/grc-tls
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj '/CN=grc-ci.local' \
+            -keyout /tmp/grc-tls/server.key -out /tmp/grc-tls/server.crt >/dev/null 2>&1
+          docker run --rm \
+            --add-host backend:127.0.0.1 --add-host frontend:127.0.0.1 \
+            -v "$PWD/infra/nginx/pilot-tls.conf:/etc/nginx/conf.d/default.conf:ro" \
+            -v "/tmp/grc-tls/server.crt:/etc/nginx/tls/server.crt:ro" \
+            -v "/tmp/grc-tls/server.key:/etc/nginx/tls/server.key:ro" \
+            nginx:1.28.0-alpine nginx -t
+      - name: Rehearse migration from pull-request base on disposable PostgreSQL
+        if: github.event_name == 'pull_request'
+        working-directory: .
+        env:
+          MIGRATION_REHEARSAL_REPORT_DIR: ${{ runner.temp }}/grc-migration-rehearsal
+        run: bash scripts/migration-rehearsal.sh "${{ github.event.pull_request.base.sha }}"
+      - name: Upload migration rehearsal report
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: migration-rehearsal-${{ github.sha }}
+          path: ${{ runner.temp }}/grc-migration-rehearsal
+          if-no-files-found: warn
+          retention-days: 30
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Require committed npm lockfile
+        run: test -f package-lock.json || (echo "frontend/package-lock.json is required" && exit 1)
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=high
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
