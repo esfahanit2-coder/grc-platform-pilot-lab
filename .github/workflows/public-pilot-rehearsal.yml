@@ -1,4 +1,4 @@
-# trigger-candidate: 0fe4b921f5ebc62deebbb6bebb8fb3b6726c9b7a
+# trigger-rehearsal: exact-private-sync-0fe4b921-r1
 name: Public clean-host pilot rehearsal
 
 on:
