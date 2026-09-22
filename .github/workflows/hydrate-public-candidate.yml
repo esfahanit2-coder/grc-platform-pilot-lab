@@ -46,8 +46,7 @@ jobs:
               tf.extractall(dest, filter="data")
           PY
 
-          rm -rf public-export
-          rm -f .github/workflows/hydrate-public-candidate.yml
+          cp .github/workflows/hydrate-public-candidate.yml /tmp/hydrate-public-candidate.yml
 
           shopt -s dotglob nullglob
           for item in * .*; do
@@ -58,14 +57,17 @@ jobs:
           done
 
           cp -a /tmp/grc-candidate/. .
+          rm -rf .github/workflows
+          mkdir -p .github/workflows
+          cp /tmp/hydrate-public-candidate.yml .github/workflows/hydrate-public-candidate.yml
           printf '%s\n' "$EXPECTED" > PUBLIC_PILOT_SOURCE_SHA
 
-      - name: Commit hydrated snapshot
+      - name: Commit hydrated snapshot without workflow files
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "Hydrate exact public Pilot candidate 3443bea23764bcf0ebf12b43b075396565963ef0"
+          git commit -m "Hydrate public Pilot candidate content 3443bea23764bcf0ebf12b43b075396565963ef0"
           git push origin HEAD:main
