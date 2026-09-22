@@ -33,6 +33,12 @@ mkdir -p "$DEST"
 chmod 700 "$ROOT/backups" "$DEST" 2>/dev/null || true
 
 COMPOSE=(docker compose --env-file .env -f docker-compose.pilot.yml)
+if [[ "${PILOT_TLS:-NO}" == "YES" ]]; then
+  COMPOSE+=(-f docker-compose.pilot.tls.yml)
+fi
+if [[ "${PILOT_LOCAL_AI:-NO}" == "YES" ]]; then
+  COMPOSE+=(--profile local-ai)
+fi
 START_EPOCH="$(date +%s)"
 START_ISO="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 QUIESCED_NOW=0

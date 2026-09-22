@@ -79,3 +79,13 @@ class PilotObjectStoreArchiveTests(SimpleTestCase):
             with self.assertRaisesMessage(CommandError, "not empty"):
                 Command()._restore(target, "grc-evidence", archive_path, replace=False)
             self.assertEqual(target.objects, {"existing": b"keep"})
+
+
+class PilotBackupScriptContractTests(SimpleTestCase):
+    def test_backup_preserves_active_tls_and_local_ai_compose_overlays(self):
+        root = Path(__file__).resolve().parents[3]
+        script = (root / "scripts" / "pilot-backup.sh").read_text(encoding="utf-8")
+        self.assertIn('if [[ "${PILOT_TLS:-NO}" == "YES" ]]', script)
+        self.assertIn("COMPOSE+=(-f docker-compose.pilot.tls.yml)", script)
+        self.assertIn('if [[ "${PILOT_LOCAL_AI:-NO}" == "YES" ]]', script)
+        self.assertIn("COMPOSE+=(--profile local-ai)", script)
