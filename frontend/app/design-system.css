@@ -1,0 +1,443 @@
+:root {
+  --ui-font-sans: Tahoma, "Segoe UI", Arial, sans-serif;
+  --ui-bg: #f4f7fb;
+  --ui-surface: #ffffff;
+  --ui-surface-subtle: #f8fafc;
+  --ui-text: #10203d;
+  --ui-text-muted: #667a92;
+  --ui-border: #dfe7f0;
+  --ui-border-strong: #c9d6e4;
+  --ui-primary: #176dde;
+  --ui-primary-hover: #125cbd;
+  --ui-primary-soft: #eaf3ff;
+  --ui-success: #087a51;
+  --ui-success-soft: #e8f7f0;
+  --ui-warning: #946000;
+  --ui-warning-soft: #fff5d9;
+  --ui-danger: #b42332;
+  --ui-danger-soft: #ffe8eb;
+  --ui-info: #315b87;
+  --ui-info-soft: #edf5fd;
+  --ui-focus: rgba(23, 109, 222, 0.22);
+  --ui-radius-sm: 8px;
+  --ui-radius-md: 12px;
+  --ui-radius-lg: 16px;
+  --ui-shadow-sm: 0 4px 16px rgba(19, 52, 86, 0.07);
+  --ui-shadow-md: 0 14px 38px rgba(19, 52, 86, 0.1);
+  --ui-space-1: 4px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-5: 20px;
+  --ui-space-6: 24px;
+  --ui-space-8: 32px;
+  --ui-control-height: 42px;
+}
+
+html {
+  background: var(--ui-bg);
+}
+
+body {
+  font-family: var(--ui-font-sans);
+  background: var(--ui-bg);
+  color: var(--ui-text);
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 3px solid var(--ui-focus);
+  outline-offset: 2px;
+}
+
+.uiButton {
+  min-height: var(--ui-control-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-space-2);
+  border: 1px solid transparent;
+  border-radius: var(--ui-radius-sm);
+  padding: 0 16px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
+}
+
+.uiButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.uiButton--sm {
+  min-height: 34px;
+  padding-inline: 12px;
+  font-size: 13px;
+}
+
+.uiButton--primary {
+  color: #fff;
+  background: var(--ui-primary);
+  border-color: var(--ui-primary);
+}
+
+.uiButton--primary:not(:disabled):hover {
+  background: var(--ui-primary-hover);
+  border-color: var(--ui-primary-hover);
+}
+
+.uiButton--secondary {
+  color: var(--ui-primary);
+  background: var(--ui-surface);
+  border-color: var(--ui-border-strong);
+}
+
+.uiButton--secondary:not(:disabled):hover,
+.uiButton--ghost:not(:disabled):hover {
+  background: var(--ui-primary-soft);
+}
+
+.uiButton--ghost {
+  color: var(--ui-text-muted);
+  background: transparent;
+  border-color: transparent;
+}
+
+.uiButton--danger {
+  color: #fff;
+  background: var(--ui-danger);
+  border-color: var(--ui-danger);
+}
+
+.uiSpinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid currentColor;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  animation: ui-spin 700ms linear infinite;
+}
+
+@keyframes ui-spin {
+  to { transform: rotate(360deg); }
+}
+
+.uiField {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  font-weight: 700;
+}
+
+.uiFieldLabel {
+  color: var(--ui-text);
+  font-size: 14px;
+}
+
+.uiRequired {
+  color: var(--ui-danger);
+}
+
+.uiFieldHint,
+.uiFieldError {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.7;
+}
+
+.uiFieldHint {
+  color: var(--ui-text-muted);
+}
+
+.uiFieldError {
+  color: var(--ui-danger);
+}
+
+.uiControl {
+  width: 100%;
+  min-height: var(--ui-control-height);
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  padding: 9px 11px;
+  font: inherit;
+  font-weight: 400;
+  transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.uiControl:hover:not(:disabled) {
+  border-color: #aebfd2;
+}
+
+.uiControl:focus {
+  border-color: var(--ui-primary);
+  box-shadow: 0 0 0 3px var(--ui-focus);
+  outline: none;
+}
+
+.uiControl:disabled {
+  background: #eef2f6;
+  color: #8393a6;
+  cursor: not-allowed;
+}
+
+.uiTextarea {
+  min-height: 112px;
+  resize: vertical;
+  line-height: 1.9;
+}
+
+.uiSelect {
+  cursor: pointer;
+}
+
+.uiMessage {
+  display: grid;
+  gap: 3px;
+  border: 1px solid transparent;
+  border-radius: var(--ui-radius-sm);
+  padding: 11px 13px;
+  line-height: 1.7;
+}
+
+.uiMessage strong,
+.uiMessage span {
+  display: block;
+}
+
+.uiMessage--info {
+  color: var(--ui-info);
+  background: var(--ui-info-soft);
+  border-color: #cee1f4;
+}
+
+.uiMessage--success {
+  color: var(--ui-success);
+  background: var(--ui-success-soft);
+  border-color: #c9eadc;
+}
+
+.uiMessage--warning {
+  color: var(--ui-warning);
+  background: var(--ui-warning-soft);
+  border-color: #f0dda9;
+}
+
+.uiMessage--danger {
+  color: var(--ui-danger);
+  background: var(--ui-danger-soft);
+  border-color: #f3c9cf;
+}
+
+.uiSurface {
+  min-width: 0;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-md);
+  box-shadow: var(--ui-shadow-sm);
+}
+
+.uiSurface--padded {
+  padding: var(--ui-space-5);
+}
+
+.uiPageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ui-space-5);
+  margin-bottom: var(--ui-space-5);
+}
+
+.uiPageHeaderMain {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ui-space-3);
+  min-width: 0;
+}
+
+.uiPageHeaderLeading {
+  flex: 0 0 auto;
+}
+
+.uiPageHeader h1 {
+  margin: 0 0 5px;
+  font-size: clamp(24px, 3vw, 31px);
+  line-height: 1.25;
+}
+
+.uiPageHeader p {
+  margin: 0;
+  color: var(--ui-text-muted);
+  line-height: 1.8;
+}
+
+.uiPageHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  flex-wrap: wrap;
+}
+
+.uiEyebrow {
+  color: var(--ui-primary);
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.uiEmptyState {
+  min-height: 150px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 6px;
+  text-align: center;
+  padding: var(--ui-space-6);
+  color: var(--ui-text-muted);
+}
+
+.uiEmptyState strong {
+  color: var(--ui-text);
+}
+
+.uiEmptyState p {
+  max-width: 580px;
+  margin: 0;
+  line-height: 1.8;
+}
+
+.uiEmptyStateAction {
+  margin-top: var(--ui-space-2);
+}
+
+.uiTechnical {
+  direction: ltr;
+  unicode-bidi: plaintext;
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  word-break: break-word;
+}
+
+.uiFormGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ui-space-4);
+}
+
+.uiFormActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--ui-space-2);
+  margin-top: var(--ui-space-4);
+}
+
+.uiToolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  flex-wrap: wrap;
+  margin-block: var(--ui-space-5);
+}
+
+.uiToolbar > .uiControl {
+  width: auto;
+  min-width: 180px;
+}
+
+.uiToolbar > .uiControl:first-child {
+  flex: 1 1 320px;
+}
+
+.uiTableWrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.uiTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.uiTable th,
+.uiTable td {
+  text-align: start;
+  padding: 12px 13px;
+  border-bottom: 1px solid #edf1f5;
+  vertical-align: top;
+}
+
+.uiTable th {
+  color: var(--ui-text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--ui-surface-subtle);
+  white-space: nowrap;
+}
+
+.uiTable tbody tr:hover {
+  background: #fbfdff;
+}
+
+.uiPagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-space-3);
+  flex-wrap: wrap;
+  padding-top: var(--ui-space-4);
+}
+
+@media (max-width: 760px) {
+  .uiPageHeader {
+    display: grid;
+  }
+
+  .uiPageHeaderActions {
+    width: 100%;
+  }
+
+  .uiPageHeaderActions .uiButton {
+    flex: 1 1 auto;
+  }
+
+  .uiFormGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .uiSurface--padded {
+    padding: var(--ui-space-4);
+  }
+
+  .uiToolbar {
+    align-items: stretch;
+  }
+
+  .uiToolbar > .uiControl,
+  .uiToolbar > .uiControl:first-child {
+    width: 100%;
+    min-width: 0;
+    flex-basis: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

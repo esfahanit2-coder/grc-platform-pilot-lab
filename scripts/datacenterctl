@@ -1,0 +1,262 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+umask 077
+
+COMMAND="${1:-help}"
+[[ $# -gt 0 ]] && shift || true
+ENV_FILE="$ROOT/.env"
+
+usage() {
+  cat <<'EOF'
+Usage: scripts/datacenterctl <command> [arguments]
+
+Commands:
+  validate                     Validate production config and TLS files.
+  install                      Start exact preloaded release images. Requires CONFIRM_INSTALL=YES.
+  verify                       Emit machine-readable installation verification.
+  bootstrap <options...>       Create first tenant/admin; password is read securely from terminal.
+  backup [name]                Release-consistent database + object-store backup.
+  upgrade <bundle> <key> [backup] Apply a verified signed release bundle through the offline-safe upgrade path.
+  restore <backup>             Destructive restore; confirmation is enforced by pilot-restore.sh.
+  rollback <backup>            Destructive release rollback; confirmation is enforced by pilot-rollback.sh.
+  support [output-dir]         Create a secret-safe support bundle.
+  help                         Show this help.
+
+Environment:
+  DATACENTER_LOCAL_AI=YES      Include the local-ai Compose profile.
+EOF
+}
+
+require_env() {
+  if [[ ! -s "$ENV_FILE" ]]; then
+    echo "ERROR: production environment file not found: $ENV_FILE" >&2
+    exit 2
+  fi
+  ENV_FILE="$(realpath "$ENV_FILE")"
+  export PILOT_ENV_FILE="$ENV_FILE"
+  export PILOT_TLS=YES
+  if [[ "${DATACENTER_LOCAL_AI:-NO}" == "YES" ]]; then
+    export PILOT_LOCAL_AI=YES
+  else
+    export PILOT_LOCAL_AI=NO
+  fi
+}
+
+release_version() {
+  python - "$ENV_FILE" <<'PY'
+import sys
+from pathlib import Path
+for raw in Path(sys.argv[1]).read_text(encoding="utf-8").splitlines():
+    line = raw.strip()
+    if not line or line.startswith("#") or "=" not in line:
+        continue
+    key, value = line.split("=", 1)
+    if key.strip() == "GRC_RELEASE_VERSION":
+        print(value.strip().strip("'\""))
+        raise SystemExit(0)
+raise SystemExit(2)
+PY
+}
+
+compose_args() {
+  COMPOSE=(docker compose --env-file "$ENV_FILE" -f docker-compose.pilot.yml -f docker-compose.pilot.tls.yml)
+  if [[ "${DATACENTER_LOCAL_AI:-NO}" == "YES" ]]; then
+    COMPOSE+=(--profile local-ai)
+  fi
+}
+
+validate() {
+  local version
+  version="$(release_version)" || {
+    echo "ERROR: GRC_RELEASE_VERSION is missing." >&2
+    exit 2
+  }
+  python scripts/datacenter-env-validate.py \
+    --env "$ENV_FILE" \
+    --release-version "$version" \
+    --require-tls-files
+}
+
+install_release() {
+  local version
+  if [[ "${CONFIRM_INSTALL:-NO}" != "YES" ]]; then
+    echo "ERROR: set CONFIRM_INSTALL=YES after change approval." >&2
+    exit 2
+  fi
+  for command in docker git openssl python realpath; do
+    command -v "$command" >/dev/null || { echo "ERROR: required command not found: $command" >&2; exit 2; }
+  done
+  docker info >/dev/null
+  compose_version="$(docker compose version --short 2>/dev/null || true)"
+  python - "$compose_version" <<'PY'
+import re
+import sys
+match = re.search(r"(\d+)\.(\d+)\.(\d+)", sys.argv[1])
+if not match or tuple(map(int, match.groups())) < (2, 24, 4):
+    raise SystemExit("ERROR: Docker Compose 2.24.4 or later is required")
+PY
+  validate >/dev/null
+  compose_args
+
+  "${COMPOSE[@]}" config >/dev/null
+  if ! "${COMPOSE[@]}" up --help | grep -q -- '--wait'; then
+    echo "ERROR: installed Docker Compose does not support --wait." >&2
+    exit 3
+  fi
+  if ! "${COMPOSE[@]}" up --help | grep -q -- '--pull'; then
+    echo "ERROR: installed Docker Compose does not support an explicit pull policy." >&2
+    exit 3
+  fi
+
+  mapfile -t images < <("${COMPOSE[@]}" config --images | sort -u)
+  if [[ "${#images[@]}" -eq 0 ]]; then
+    echo "ERROR: Compose did not resolve any images." >&2
+    exit 3
+  fi
+  for image in "${images[@]}"; do
+    if [[ "$image" == *":latest" || "${image##*/}" != *:* ]]; then
+      echo "ERROR: mutable/unpinned image reference is not allowed: $image" >&2
+      exit 3
+    fi
+    docker image inspect "$image" >/dev/null || {
+      echo "ERROR: exact release image is not preloaded: $image" >&2
+      exit 3
+    }
+  done
+
+  version="$(release_version)"
+  python scripts/datacenter-verify.py --env "$ENV_FILE" --release-version "$version" --preflight >/dev/null
+
+  services=(postgres redis objectstore backend worker beat frontend gateway)
+  if [[ "${DATACENTER_LOCAL_AI:-NO}" == "YES" ]]; then
+    services+=(ollama)
+  fi
+
+  echo "Starting exact preloaded datacenter release without build or pull..."
+  "${COMPOSE[@]}" up -d --no-build --pull never --wait "${services[@]}"
+
+  python scripts/datacenter-verify.py --env "$ENV_FILE" --release-version "$version"
+}
+
+bootstrap() {
+  compose_args
+  if [[ "$#" -eq 0 ]]; then
+    echo "ERROR: bootstrap requires --tenant-code, --tenant-name, --admin-username and --admin-email." >&2
+    exit 2
+  fi
+  local password confirm
+  read -r -s -p "Initial administrator password: " password
+  echo
+  read -r -s -p "Confirm administrator password: " confirm
+  echo
+  if [[ -z "$password" || "$password" != "$confirm" ]]; then
+    unset password confirm
+    echo "ERROR: password is empty or confirmation does not match." >&2
+    exit 2
+  fi
+  printf '%s\n' "$password" | "${COMPOSE[@]}" exec -T backend \
+    python manage.py bootstrap_datacenter --password-stdin "$@"
+  unset password confirm
+}
+
+if [[ "$COMMAND" == "help" || "$COMMAND" == "-h" || "$COMMAND" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+require_env
+compose_args
+
+case "$COMMAND" in
+  validate)
+    validate
+    ;;
+  install)
+    install_release
+    ;;
+  verify)
+    version="$(release_version)"
+    python scripts/datacenter-verify.py --env "$ENV_FILE" --release-version "$version" "$@"
+    ;;
+  bootstrap)
+    bootstrap "$@"
+    ;;
+  backup)
+    BACKUP_QUIESCE="${BACKUP_QUIESCE:-YES}" \
+    PILOT_TLS=YES \
+      bash scripts/pilot-backup.sh "${1:-$(date -u +%Y%m%dT%H%M%SZ)}"
+    ;;
+  upgrade)
+    if [[ $# -lt 2 || $# -gt 3 ]]; then
+      echo "ERROR: upgrade requires <signed-bundle> <trusted-public-key> [backup-name]." >&2
+      exit 2
+    fi
+    validate >/dev/null
+    version="$(release_version)"
+    python scripts/datacenter-verify.py --env "$ENV_FILE" --release-version "$version" --preflight >/dev/null
+    bash scripts/offline-release-apply.sh update "$1" "$2" "$ROOT/.." "${3:-}"
+    ;;
+  restore)
+    PILOT_TLS=YES bash scripts/pilot-restore.sh "$@"
+    version="$(release_version)"
+    python scripts/datacenter-verify.py --env "$ENV_FILE" --release-version "$version"
+    ;;
+  rollback)
+    if [[ $# -ne 1 ]]; then
+      echo "ERROR: rollback requires exactly one pre-upgrade backup name." >&2
+      exit 2
+    fi
+    backup_manifest="$ROOT/backups/$1/backup-manifest.json"
+    if [[ ! -s "$backup_manifest" ]]; then
+      echo "ERROR: rollback backup manifest is missing." >&2
+      exit 2
+    fi
+    rollback_sha="$(python - "$backup_manifest" <<'PY'
+import json
+import re
+import sys
+payload = json.load(open(sys.argv[1], encoding="utf-8"))
+value = str(payload.get("source_commit") or "")
+if not re.fullmatch(r"[0-9a-f]{40}", value):
+    raise SystemExit(2)
+print(value)
+PY
+)"
+    history_dir="$ROOT/../release/history/$rollback_sha"
+    for required in release-manifest.json release-manifest.sig trusted-release-public-key.pem; do
+      if [[ ! -s "$history_dir/$required" ]]; then
+        echo "ERROR: signed rollback metadata is missing: $history_dir/$required" >&2
+        exit 3
+      fi
+    done
+    openssl dgst -sha256       -verify "$history_dir/trusted-release-public-key.pem"       -signature "$history_dir/release-manifest.sig"       "$history_dir/release-manifest.json" >/dev/null
+    PILOT_TLS=YES bash scripts/pilot-rollback.sh "$1"
+    install -m 600 "$history_dir/release-manifest.json" "$ROOT/../release/release-manifest.json"
+    install -m 600 "$history_dir/release-manifest.sig" "$ROOT/../release/release-manifest.sig"
+    install -m 600 "$history_dir/trusted-release-public-key.pem" "$ROOT/../release/trusted-release-public-key.pem"
+    if [[ -s "$history_dir/images.json" ]]; then
+      install -m 600 "$history_dir/images.json" "$ROOT/../release/images.json"
+    else
+      rm -f "$ROOT/../release/images.json"
+    fi
+    echo "Rollback release metadata restored for source $rollback_sha."
+    ;;
+  support)
+    if [[ $# -gt 0 ]]; then
+      python scripts/datacenter-support-bundle.py --env "$ENV_FILE" --output "$1"
+    else
+      python scripts/datacenter-support-bundle.py --env "$ENV_FILE"
+    fi
+    ;;
+  help|-h|--help)
+    usage
+    ;;
+  *)
+    echo "ERROR: unknown command: $COMMAND" >&2
+    usage >&2
+    exit 2
+    ;;
+esac

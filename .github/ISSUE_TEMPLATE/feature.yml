@@ -1,0 +1,29 @@
+name: Feature
+about: Product or engineering capability
+labels: []
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / goal
+      description: What business or technical problem should this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Proposed scope
+      description: Expected behavior and boundaries.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Concrete testable outcomes.
+    validations:
+      required: true
+  - type: textarea
+    id: security
+    attributes:
+      label: Security / tenancy / audit considerations

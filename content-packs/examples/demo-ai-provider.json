@@ -1,0 +1,13 @@
+{
+  "name": "Local Ollama",
+  "provider_type": "ollama",
+  "base_url": "http://ollama:11434",
+  "model_name": "approved-local-model",
+  "secret_env_var": "",
+  "is_active": true,
+  "is_default": true,
+  "allow_confidential": true,
+  "configuration": {
+    "timeout": 120
+  }
+}

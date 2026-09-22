@@ -1,0 +1,96 @@
+{
+  "schema": "grc-pilot-manual-observations-v1",
+  "observations": {
+    "clean_host_confirmed": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_OPERATOR_NAME_OR_ID",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Confirm this was the approved clean/replacement pilot host and reference the change/deployment record; do not paste secrets or customer data.",
+      "evidence_refs": ["REPLACE_WITH_INTERNAL_EVIDENCE_REFERENCE"]
+    },
+    "https_secure_cookie_csrf": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_OPERATOR_NAME_OR_ID",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Record authenticated browser/API verification for HTTPS redirect, Secure cookies, CSRF trusted-origin behavior and forwarded HTTPS handling.",
+      "evidence_refs": ["REPLACE_WITH_INTERNAL_EVIDENCE_REFERENCE"]
+    },
+    "restore_marker_proof": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_OPERATOR_NAME_OR_ID",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Confirm the pre-backup marker exists after restore and the post-backup marker does not.",
+      "evidence_refs": ["REPLACE_WITH_INTERNAL_EVIDENCE_REFERENCE"]
+    },
+    "object_evidence_checksum": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_OPERATOR_NAME_OR_ID",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Confirm at least one restored Evidence object downloads successfully and its application checksum matches. Reference IDs/checksums only; do not embed payloads.",
+      "evidence_refs": ["REPLACE_WITH_INTERNAL_EVIDENCE_REFERENCE"]
+    },
+    "internet_egress_blocked_during_ai": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_OPERATOR_NAME_OR_ID",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Confirm internet egress was blocked during the local-model generation and embedding acceptance test.",
+      "evidence_refs": ["REPLACE_WITH_FIREWALL_OR_NETWORK_EVIDENCE_REFERENCE"]
+    },
+    "ai_disable_provider_switch": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_OPERATOR_NAME_OR_ID",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Confirm AI-disabled mode and provider switching were exercised on the pilot without domain-code changes.",
+      "evidence_refs": ["REPLACE_WITH_INTERNAL_EVIDENCE_REFERENCE"]
+    },
+    "monitoring_logging_health": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_OPERATOR_NAME_OR_ID",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Confirm health endpoints, worker/background processing, monitoring and approved log review worked on the pilot host.",
+      "evidence_refs": ["REPLACE_WITH_INTERNAL_EVIDENCE_REFERENCE"]
+    },
+    "rpo_accepted": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_RECOVERY_REVIEWER_NAME_OR_ID",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Record the measured recoverable cutoff from controlled marker evidence and whether it meets the approved RPO objective.",
+      "evidence_refs": ["REPLACE_WITH_RPO_MEASUREMENT_REFERENCE"]
+    },
+    "rto_accepted": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_RECOVERY_REVIEWER_NAME_OR_ID",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Review observed_rto_seconds plus required manual validation time and record whether the result meets the approved RTO objective.",
+      "evidence_refs": ["REPLACE_WITH_RTO_MEASUREMENT_REFERENCE"]
+    },
+    "ai_human_review": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_SECURITY_REVIEWER_NAME_OR_ID",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Human-review the complete real-model adversarial responses outside the low-risk bundle and record the security decision.",
+      "evidence_refs": ["REPLACE_WITH_RESTRICTED_AI_REVIEW_REFERENCE"]
+    },
+    "scanner_real_validation": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_SECURITY_REVIEWER_NAME_OR_ID",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Record authorized real malware-scanner clean/infected/unavailable-path validation and signature-update evidence.",
+      "evidence_refs": ["REPLACE_WITH_SCANNER_VALIDATION_REFERENCE"]
+    },
+    "audit_immutable_storage_validation": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_SECURITY_REVIEWER_NAME_OR_ID",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Record deployment-level immutable/WORM or approved external audit-checkpoint validation where required.",
+      "evidence_refs": ["REPLACE_WITH_AUDIT_STORAGE_REFERENCE"]
+    },
+    "pentest_completed_or_scheduled": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_SECURITY_OR_RELEASE_OWNER_NAME_OR_ID",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Record the independent penetration-test report/retest or formally approved schedule reference.",
+      "evidence_refs": ["REPLACE_WITH_PENTEST_REFERENCE"]
+    }
+  }
+}

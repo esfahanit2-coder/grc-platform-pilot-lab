@@ -1,0 +1,20 @@
+{
+  "framework": {
+    "code": "demo-security-baseline",
+    "name": "Demo Security Governance Baseline",
+    "publisher": "GRC Platform Demo",
+    "framework_type": "best_practice",
+    "license_type": "internal",
+    "license_metadata": {"notice": "Original demo content; safe for development and tests."},
+    "description": "A small original framework used to exercise the framework engine without third-party copyrighted standard text."
+  },
+  "version": {"version_code": "2026.1", "title": "Initial demo release"},
+  "requirements": [
+    {"code": "GOV", "title": "Governance", "assessable": false, "sort_order": 10, "title_fa": "حاکمیت"},
+    {"code": "GOV.1", "parent_code": "GOV", "title": "Security responsibilities are formally assigned", "body": "Assign accountable owners for security governance and operational responsibilities.", "guidance": "Keep responsibility assignments current and review them after material organizational changes.", "sort_order": 20, "title_fa": "مسئولیت‌های امنیتی به‌صورت رسمی تعیین شوند"},
+    {"code": "RISK", "title": "Risk Management", "assessable": false, "sort_order": 30, "title_fa": "مدیریت ریسک"},
+    {"code": "RISK.1", "parent_code": "RISK", "title": "Material risks are recorded and assigned to owners", "body": "Maintain a risk register with ownership and review dates.", "sort_order": 40, "title_fa": "ریسک‌های مهم ثبت و به مالک ریسک تخصیص یابند"},
+    {"code": "ASSURE", "title": "Assurance", "assessable": false, "sort_order": 50, "title_fa": "اطمینان‌بخشی"},
+    {"code": "ASSURE.1", "parent_code": "ASSURE", "title": "Evidence supports implementation claims", "body": "Implementation claims are supported by current, attributable evidence.", "sort_order": 60, "title_fa": "ادعاهای پیاده‌سازی با شواهد معتبر پشتیبانی شوند"}
+  ]
+}

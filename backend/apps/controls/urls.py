@@ -1,0 +1,3 @@
+from rest_framework.routers import DefaultRouter
+from .views import ControlCategoryViewSet,ControlViewSet,ControlRequirementViewSet,ControlImplementationViewSet,ControlTestViewSet,ControlTestRunViewSet
+r=DefaultRouter();r.register('control-categories',ControlCategoryViewSet,basename='control-category');r.register('controls',ControlViewSet,basename='control');r.register('control-requirements',ControlRequirementViewSet,basename='control-requirement');r.register('control-implementations',ControlImplementationViewSet,basename='control-implementation');r.register('control-tests',ControlTestViewSet,basename='control-test');r.register('control-test-runs',ControlTestRunViewSet,basename='control-test-run');urlpatterns=r.urls

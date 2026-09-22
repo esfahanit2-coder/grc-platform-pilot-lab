@@ -1,0 +1,10 @@
+"use client";
+import Link from "next/link";
+import { useState } from "react";
+import { apiFetch } from "../../../lib/api";
+
+export default function NewFrameworkPage(){
+ const [code,setCode]=useState("");const [name,setName]=useState("");const [publisher,setPublisher]=useState("");const [version,setVersion]=useState("1.0");const [message,setMessage]=useState("");const [busy,setBusy]=useState(false);
+ async function create(){setBusy(true);setMessage("");const r=await apiFetch('/frameworks/',{method:'POST',body:JSON.stringify({code,name,publisher,framework_type:'standard',license_type:'internal',description:'',status:'draft'})});if(!r.ok){setMessage('ساخت چارچوب ناموفق بود. کد باید در Tenant یکتا باشد.');setBusy(false);return;}const fw=await r.json();const vr=await apiFetch('/framework-versions/',{method:'POST',body:JSON.stringify({framework:fw.id,version_code:version,title:`${name} ${version}`,status:'draft',metadata:{}})});if(vr.ok){location.href=`/frameworks/${fw.id}`;}else{setMessage('چارچوب ساخته شد ولی ساخت نسخه ناموفق بود.');setBusy(false);}}
+ return <main className="adminPage narrow"><div className="pageHead"><div><h1>چارچوب جدید</h1><p>برای Framework اختصاصی سازمان؛ هیچ تغییر Backend لازم نیست.</p></div><Link className="secondaryLink" href="/frameworks">بازگشت</Link></div><article className="panel settingsForm"><label>کد Framework<input value={code} onChange={e=>setCode(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,''))} placeholder="internal-security"/></label><label>نام<input value={name} onChange={e=>setName(e.target.value)} placeholder="Internal Security Baseline"/></label><label>ناشر<input value={publisher} onChange={e=>setPublisher(e.target.value)} placeholder="نام سازمان"/></label><label>نسخه اولیه<input value={version} onChange={e=>setVersion(e.target.value)} placeholder="2026.1"/></label><button className="primary" disabled={busy||!code||!name||!version} onClick={create}>ایجاد Framework و نسخه</button>{message&&<p className="message">{message}</p>}</article></main>
+}

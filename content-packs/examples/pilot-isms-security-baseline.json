@@ -1,0 +1,54 @@
+{
+  "framework": {
+    "code": "pilot-isms-security-baseline",
+    "name": "Pilot ISMS & Security Assurance Baseline",
+    "publisher": "GRC Platform Project",
+    "framework_type": "best_practice",
+    "license_type": "internal",
+    "license_metadata": {
+      "content_class": "INTERNAL",
+      "source_name": "GRC Platform Project original pilot baseline",
+      "rights_basis": "Original project-authored content",
+      "provenance": "Authored specifically for the GRC Platform pilot; no standards text was copied into this pack.",
+      "redistribution_allowed": true,
+      "restricted_sources_reproduced": false,
+      "notice": "Original implementation baseline. It does not reproduce ISO, COBIT or AFTA copyrighted requirement text. Crosswalks to licensed/customer-provided frameworks are added separately and require human approval."
+    },
+    "description": "Original pilot baseline for testing governance, asset, identity, backup, logging, vulnerability, incident and assurance workflows."
+  },
+  "version": {
+    "version_code": "2026.1",
+    "title": "Pilot baseline",
+    "metadata": {
+      "scoring_model": {
+        "type": "weighted_assessment",
+        "default_weight": 1,
+        "mandatory_requirements": true
+      },
+      "applicability_model": {
+        "type": "assessment_scope",
+        "not_applicable_requires_rationale": true
+      },
+      "report_hooks": ["rtp", "soa", "assessment_report", "audit_report"],
+      "crosswalk_policy": "Human approval is required before a common-control or requirement mapping is treated as approved."
+    }
+  },
+  "requirements": [
+    {"code":"GOV","title":"Governance","assessable":false,"sort_order":10,"title_fa":"حاکمیت"},
+    {"code":"GOV.1","parent_code":"GOV","title":"Security responsibilities have accountable owners","body":"Assign accountable owners for security governance and review responsibilities after material organizational changes.","weight":1,"mandatory":true,"sort_order":20,"title_fa":"مسئولیت‌های امنیتی دارای مالک پاسخگو باشند"},
+    {"code":"AST","title":"Assets","assessable":false,"sort_order":30,"title_fa":"دارایی‌ها"},
+    {"code":"AST.1","parent_code":"AST","title":"Material information and technology assets are inventoried","body":"Maintain ownership and criticality information for material assets.","weight":1,"mandatory":true,"sort_order":40,"title_fa":"دارایی‌های مهم اطلاعاتی و فناوری شناسایی و مالک‌گذاری شوند"},
+    {"code":"IAM","title":"Identity and Access","assessable":false,"sort_order":50,"title_fa":"هویت و دسترسی"},
+    {"code":"IAM.1","parent_code":"IAM","title":"Privileged access uses strong multi-factor authentication","body":"Require multi-factor authentication for privileged administrative access unless an approved exception exists.","weight":1,"mandatory":true,"sort_order":60,"title_fa":"دسترسی‌های ممتاز از احراز هویت چندمرحله‌ای قوی استفاده کنند"},
+    {"code":"BCK","title":"Backup and Recovery","assessable":false,"sort_order":70,"title_fa":"پشتیبان‌گیری و بازیابی"},
+    {"code":"BCK.1","parent_code":"BCK","title":"Critical backups are monitored and recoverability is evidenced","body":"Monitor critical backup jobs and retain evidence that recovery points are available.","weight":1,"mandatory":true,"sort_order":80,"title_fa":"پشتیبان‌گیری‌های حیاتی پایش و قابلیت بازیابی آنها مستند شود"},
+    {"code":"LOG","title":"Logging and Monitoring","assessable":false,"sort_order":90,"title_fa":"ثبت رویداد و پایش"},
+    {"code":"LOG.1","parent_code":"LOG","title":"Security-relevant events are logged and reviewed","body":"Collect and review security-relevant logs according to approved retention and monitoring rules.","weight":1,"mandatory":true,"sort_order":100,"title_fa":"رویدادهای امنیتی ثبت و بازبینی شوند"},
+    {"code":"VUL","title":"Vulnerability Management","assessable":false,"sort_order":110,"title_fa":"مدیریت آسیب‌پذیری"},
+    {"code":"VUL.1","parent_code":"VUL","title":"Material vulnerabilities are identified and remediated by risk","body":"Run approved vulnerability assessments and track material findings to remediation or formally accepted risk.","weight":1,"mandatory":true,"sort_order":120,"title_fa":"آسیب‌پذیری‌های مهم بر اساس ریسک شناسایی و اصلاح شوند"},
+    {"code":"INC","title":"Incident Readiness","assessable":false,"sort_order":130,"title_fa":"آمادگی رخداد"},
+    {"code":"INC.1","parent_code":"INC","title":"Security incidents have defined response ownership and escalation","body":"Define accountable incident response ownership, escalation paths and evidence retention.","weight":1,"mandatory":true,"sort_order":140,"title_fa":"برای رخدادهای امنیتی مالک پاسخگویی و مسیر تشدید مشخص باشد"},
+    {"code":"ASS","title":"Assurance","assessable":false,"sort_order":150,"title_fa":"اطمینان‌بخشی"},
+    {"code":"ASS.1","parent_code":"ASS","title":"Control implementation claims are supported by current evidence","body":"Maintain attributable, current evidence for material control implementation claims.","weight":1,"mandatory":true,"sort_order":160,"title_fa":"ادعاهای پیاده‌سازی کنترل با شواهد جاری پشتیبانی شوند"}
+  ]
+}

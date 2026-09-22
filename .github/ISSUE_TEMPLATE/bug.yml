@@ -1,0 +1,29 @@
+name: Bug
+about: Defect report
+labels: []
+body:
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+    validations:
+      required: true
+  - type: dropdown
+    id: security
+    attributes:
+      label: Could this involve tenant isolation, authorization, sensitive data or secrets?
+      options: ["No", "Possibly", "Yes - do not include exploit details publicly"]
+    validations:
+      required: true

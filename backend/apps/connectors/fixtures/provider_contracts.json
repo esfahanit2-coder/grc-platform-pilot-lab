@@ -1,0 +1,69 @@
+{
+  "fortigate": {
+    "paths": {
+      "/api/v2/monitor/system/status": {
+        "status": "success",
+        "results": {
+          "hostname": "fg-pilot",
+          "serial": "FGT0000000000000",
+          "version": "v7.x",
+          "build": 1000,
+          "model_name": "FortiGate"
+        }
+      },
+      "/api/v2/cmdb/system/admin": {
+        "status": "success",
+        "results": [
+          {"name": "secadmin", "accprofile": "super_admin", "two-factor": "fortitoken"},
+          {"name": "readonly", "accprofile": "read_only", "two-factor": "disable"}
+        ]
+      },
+      "/api/v2/cmdb/firewall/policy": {
+        "status": "success",
+        "results": [
+          {"policyid": 1, "name": "outbound", "status": "enable", "action": "accept", "logtraffic": "all", "utm-status": "enable"},
+          {"policyid": 2, "name": "legacy-disabled", "status": "disable", "action": "accept", "logtraffic": "disable", "utm-status": "disable"}
+        ]
+      },
+      "/api/v2/cmdb/system/interface": {
+        "status": "success",
+        "results": [
+          {"name": "port1", "status": "up", "role": "wan", "allowaccess": "ping https"},
+          {"name": "port2", "status": "down", "role": "lan", "allowaccess": "ping"}
+        ]
+      }
+    }
+  },
+  "tenable": {
+    "scans": {
+      "scans": [
+        {"id": 101, "name": "Weekly servers", "status": "completed", "last_modification_date": 1760000100, "folder_id": 1, "owner": "security"},
+        {"id": 102, "name": "Network devices", "status": "running", "last_modification_date": 1760000200, "folder_id": 1, "owner": "security"},
+        {"id": 103, "name": "Legacy segment", "status": "canceled", "last_modification_date": 1760000000, "folder_id": 2, "owner": "scanner"}
+      ]
+    }
+  },
+  "veeam": {
+    "backups": {
+      "Refs": [
+        {"UID": "urn:veeam:backup:1", "Name": "ERP Backup", "Type": "Backup"},
+        {"UID": "urn:veeam:backup:2", "Name": "AD Backup", "Type": "Backup"}
+      ]
+    },
+    "sessions": {
+      "Refs": [
+        {"UID": "urn:veeam:session:1", "Name": "ERP Backup", "Result": "Success", "State": "Stopped", "CreationTimeUTC": "2026-09-15T20:00:00Z", "EndTimeUTC": "2026-09-15T20:30:00Z"},
+        {"UID": "urn:veeam:session:2", "Name": "AD Backup", "Result": "Warning", "State": "Stopped", "CreationTimeUTC": "2026-09-15T21:00:00Z", "EndTimeUTC": "2026-09-15T21:20:00Z"}
+      ]
+    }
+  },
+  "active_directory": {
+    "privileged_groups": ["Domain Admins"],
+    "rows": [
+      {"sAMAccountName": "alice", "userAccountControl": "512", "memberOf": ["CN=Domain Users,DC=example,DC=local"], "whenChanged": "20260915080000.0Z"},
+      {"sAMAccountName": "disabled.user", "userAccountControl": "514", "memberOf": ["CN=Domain Users,DC=example,DC=local"], "whenChanged": "20260914080000.0Z"},
+      {"sAMAccountName": "svc.legacy", "userAccountControl": "66080", "memberOf": ["CN=Domain Users,DC=example,DC=local"], "whenChanged": "20260913080000.0Z"},
+      {"sAMAccountName": "domain.admin", "userAccountControl": "512", "memberOf": ["CN=Domain Admins,CN=Users,DC=example,DC=local"], "whenChanged": "20260916070000.0Z"}
+    ]
+  }
+}

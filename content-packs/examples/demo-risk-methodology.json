@@ -1,0 +1,21 @@
+{
+  "name": "Demo 5x5 Product Matrix",
+  "methodology_type": "semi_quantitative",
+  "formula": "product",
+  "likelihood_scale": [
+    {"value": 1, "label": "Rare"}, {"value": 2, "label": "Unlikely"},
+    {"value": 3, "label": "Possible"}, {"value": 4, "label": "Likely"},
+    {"value": 5, "label": "Almost certain"}
+  ],
+  "impact_scale": [
+    {"value": 1, "label": "Insignificant"}, {"value": 2, "label": "Minor"},
+    {"value": 3, "label": "Moderate"}, {"value": 4, "label": "Major"},
+    {"value": 5, "label": "Severe"}
+  ],
+  "thresholds": [
+    {"min": 1, "max": 4, "level": "low"},
+    {"min": 5, "max": 9, "level": "medium"},
+    {"min": 10, "max": 16, "level": "high"},
+    {"min": 17, "max": 25, "level": "critical"}
+  ]
+}

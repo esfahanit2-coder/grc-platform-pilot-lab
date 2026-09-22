@@ -1,0 +1,162 @@
+{
+  "schema": "grc-final-release-attestations-v1",
+  "release_sha": "REPLACE_WITH_EXACT_40_CHAR_RELEASE_SHA",
+  "gates": {
+    "authorized_content_issue_5": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_REVIEWER_NAME_OR_ID",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Confirm authorized content/source rights and the required reviewed AFTA / ISMS / internal-baseline mapping. Do not paste licensed/restricted source text.",
+      "evidence_refs": ["REPLACE_WITH_INTERNAL_EVIDENCE_REFERENCE"]
+    },
+    "live_connectors_issue_6": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_REVIEWER_NAME_OR_ID",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Confirm authorized live connector health/sync validation and reusable Evidence from at least three connector types. Do not paste credentials or raw customer payloads.",
+      "evidence_refs": ["REPLACE_WITH_INTERNAL_EVIDENCE_REFERENCE"]
+    },
+    "security_acceptance_issue_8": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_SECURITY_OR_RELEASE_OWNER",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Confirm the final security decision is approved under Issue #8, including applicable pentest/retest, scanner, AI, audit-integrity and target-environment evidence.",
+      "evidence_refs": ["REPLACE_WITH_SECURITY_SIGNOFF_REFERENCE"]
+    },
+    "visual_pilot_issue_42": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_PRODUCT_OR_UX_REVIEWER",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Confirm genuine running-Pilot dashboard screenshots were reviewed against the approved Persian visual direction. Generated/mock screenshots are not valid evidence.",
+      "evidence_refs": ["REPLACE_WITH_SCREENSHOT_REVIEW_REFERENCE"]
+    },
+    "operator_runbook": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_OPERATOR_NAME_OR_ID",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Confirm a clean operator executed the documented datacenter install/verify/bootstrap/backup/upgrade or recovery path without developer-only shortcuts.",
+      "evidence_refs": ["REPLACE_WITH_OPERATOR_EXECUTION_REFERENCE"]
+    },
+    "support_handover": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_SUPPORT_OR_OPERATIONS_OWNER",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Confirm support ownership, escalation route, monitoring/backup responsibilities, secret-safe support-bundle handling and operational handover are accepted.",
+      "evidence_refs": ["REPLACE_WITH_HANDOVER_REFERENCE"]
+    },
+    "customer_uat_signoff": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_CUSTOMER_OR_AUTHORIZED_UAT_OWNER",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Confirm UAT issues were triaged/retested and the authorized customer/UAT owner accepted the exact candidate release.",
+      "evidence_refs": ["REPLACE_WITH_UAT_SIGNOFF_REFERENCE"]
+    }
+  },
+  "uat_journeys": {
+    "tenant_onboarding_and_mfa": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_UAT_REVIEWER",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Tenant/admin onboarding, organization setup, login and MFA complete through supported product/operator paths.",
+      "evidence_refs": ["REPLACE_WITH_UAT_CASE_REFERENCE"]
+    },
+    "framework_content_import": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_UAT_REVIEWER",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Authorized framework/content pack imports, versions and locks correctly with provenance.",
+      "evidence_refs": ["REPLACE_WITH_UAT_CASE_REFERENCE"]
+    },
+    "asset_risk_treatment": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_UAT_REVIEWER",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Asset/process, risk evaluation, treatment and action journey succeeds with scope/audit controls.",
+      "evidence_refs": ["REPLACE_WITH_UAT_CASE_REFERENCE"]
+    },
+    "control_evidence_assessment": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_UAT_REVIEWER",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Control implementation, reusable Evidence, control testing and assessment linkage operate without autonomous compliance declaration.",
+      "evidence_refs": ["REPLACE_WITH_UAT_CASE_REFERENCE"]
+    },
+    "finding_capa_action": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_UAT_REVIEWER",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Finding to CAPA/Action assignment, review and closure journey succeeds.",
+      "evidence_refs": ["REPLACE_WITH_UAT_CASE_REFERENCE"]
+    },
+    "internal_audit_and_control_testing": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_UAT_REVIEWER",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Internal audit and control-test planning/execution/evidence/review journey succeeds.",
+      "evidence_refs": ["REPLACE_WITH_UAT_CASE_REFERENCE"]
+    },
+    "controlled_document_approval": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_UAT_REVIEWER",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Controlled document create/version/submit/review/approve/history journey succeeds.",
+      "evidence_refs": ["REPLACE_WITH_UAT_CASE_REFERENCE"]
+    },
+    "workflow_assignment_transition": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_UAT_REVIEWER",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Workflow assignments, permission-aware transitions and history succeed without duplicate business state.",
+      "evidence_refs": ["REPLACE_WITH_UAT_CASE_REFERENCE"]
+    },
+    "reporting_preview_export": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_UAT_REVIEWER",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Formal reporting preview/export for applicable SoA/RTP/Audit/Findings/Actions/Executive outputs succeeds.",
+      "evidence_refs": ["REPLACE_WITH_UAT_CASE_REFERENCE"]
+    },
+    "work_center": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_UAT_REVIEWER",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Work Center exposes actionable authoritative assignments/approvals/due work with correct scope.",
+      "evidence_refs": ["REPLACE_WITH_UAT_CASE_REFERENCE"]
+    },
+    "administration_scope_and_audit": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_UAT_REVIEWER",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "User lifecycle, role/scope administration and audit trail behave correctly, including negative scope checks.",
+      "evidence_refs": ["REPLACE_WITH_UAT_CASE_REFERENCE"]
+    },
+    "customer_import_export": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_UAT_REVIEWER",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Customer import validation/commit and scoped export work with representative authorized data.",
+      "evidence_refs": ["REPLACE_WITH_UAT_CASE_REFERENCE"]
+    },
+    "backup_restore_upgrade_support": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_UAT_REVIEWER",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Backup/restore/upgrade/support operator journey is accepted using the exact candidate release and retained evidence.",
+      "evidence_refs": ["REPLACE_WITH_UAT_CASE_REFERENCE"]
+    },
+    "notifications_smtp": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_UAT_REVIEWER",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "SMTP acceptance includes successful assignment and approval delivery, failed-relay retry and revoked-membership skip where email is in deployment scope.",
+      "evidence_refs": ["REPLACE_WITH_UAT_CASE_REFERENCE"]
+    },
+    "executive_dashboard": {
+      "status": "REPLACE_WITH_PASS_OR_FAIL",
+      "reviewer": "REPLACE_WITH_UAT_REVIEWER",
+      "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+      "note": "Executive dashboard renders live tenant-scoped data/empty states and matches the reviewed product direction without mock business values.",
+      "evidence_refs": ["REPLACE_WITH_UAT_CASE_REFERENCE"]
+    }
+  }
+}

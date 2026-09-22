@@ -1,0 +1,14 @@
+{
+  "name": "Default compliance scoring",
+  "status_scores": {
+    "compliant": 100,
+    "partial": 50,
+    "non_compliant": 0,
+    "compensating_control": 75
+  },
+  "notes": [
+    "not_assessed counts toward incomplete progress and is excluded from compliance score",
+    "not_applicable counts as assessed progress and is excluded from the compliance score denominator",
+    "an item-level numeric score overrides the status default when supplied"
+  ]
+}

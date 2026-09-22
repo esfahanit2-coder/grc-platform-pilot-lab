@@ -1,0 +1,41 @@
+{
+  "framework": {
+    "code": "<tenant-framework-code>",
+    "name": "<customer-provided framework name>",
+    "publisher": "<rights holder or publisher>",
+    "framework_type": "standard",
+    "license_type": "customer_provided",
+    "license_metadata": {
+      "content_class": "CUSTOMER_PROVIDED",
+      "source_name": "<source document name>",
+      "source_version": "<source document version>",
+      "rights_basis": "Customer-provided content under customer-held rights",
+      "authorization_reference": "<contract/license/internal approval reference>",
+      "redistribution_allowed": false,
+      "tenant_restricted": true,
+      "provenance_note": "<who supplied the source, when, and under what authority>"
+    },
+    "description": "Restricted framework content supplied by the customer. Do not commit populated copies to the product repository."
+  },
+  "version": {
+    "version_code": "<version>",
+    "title": "<version title>",
+    "metadata": {
+      "source_reference": "<customer-controlled source reference>",
+      "scoring_model": {"type": "weighted_assessment", "default_weight": 1},
+      "applicability_model": {"type": "assessment_scope", "not_applicable_requires_rationale": true},
+      "report_hooks": ["rtp", "soa", "assessment_report", "audit_report"]
+    }
+  },
+  "requirements": [
+    {
+      "code": "<customer-provided requirement identifier>",
+      "title": "<customer-provided requirement title>",
+      "body": "<customer-provided licensed text or an authorized internal paraphrase>",
+      "guidance": "<authorized guidance if applicable>",
+      "mandatory": true,
+      "weight": 1,
+      "sort_order": 10
+    }
+  ]
+}
