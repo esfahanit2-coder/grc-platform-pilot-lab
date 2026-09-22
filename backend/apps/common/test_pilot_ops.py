@@ -91,6 +91,13 @@ class PilotBackupScriptContractTests(SimpleTestCase):
         self.assertIn("COMPOSE+=(--profile local-ai)", script)
 
 
+class PilotRestoreScriptContractTests(SimpleTestCase):
+    def test_restore_migration_plan_preserves_host_operator_ownership(self):
+        root = Path(__file__).resolve().parents[3]
+        script = (root / "scripts" / "pilot-restore.sh").read_text(encoding="utf-8")
+        self.assertIn('--user "$(id -u):$(id -g)"', script)
+        self.assertIn("restore-migration-plan.json", script)
+
 class PilotPostgresComposeContractTests(SimpleTestCase):
     def test_postgres18_uses_parent_persistent_volume_layout(self):
         root = Path(__file__).resolve().parents[3]
